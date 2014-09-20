@@ -21,13 +21,15 @@
 #include "orvibo_socket.h"
 
 /*
-orviboCmd cmd[] = {
-	{"qa", {0x68, 0x64, 0x00, 0x06, 0x71}, 0},
-	{"qb", {0x68, 0x64, 0x00, 0x06, 0x71, 0x12}, 0},
-	{"qc", {0x68, 0x64, 0x00, 0x06, 0x71, 0x13}, 0},
-	{"qd", {0x68, 0x64, 0x00, 0x06, 0x71},0},
-	{"qf", {0x68, 0x64, 0x00, 0x06, 0x71}, 0},
-	{NULL, NULL, -1},
+_Orvibo_Schema_Map_T cmd[] = {
+	{	"qa", 
+		{"Head:2", "Len:2", "Cmd:2"}, 
+		{"Head:2", "Len:2", "Cmd:2", "Status:1", "Uid:12", "localPassword:12", "Model:6", "Time:4", "Status:1"},
+	},
+	{	"qb", 
+		{"Head:2", "Len:2", "Cmd:2"}, 
+		{"Head:2", "Len:2", "Cmd:2", "Status:1", "Uid:12", "localPassword:12", "Model:6", "Time:4", "Status:1"},
+	},
 };
 */
 

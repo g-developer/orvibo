@@ -29,30 +29,55 @@
 #include<arpa/inet.h>
 #include<unistd.h>
 
-typedef struct __Orvibo_Head_Map_S{
-	char *head;
-	unsigned len;
-}_Orvibo_Head_Map_T;
+typedef struct __Orvibo_Schema_Config_Map_S{
+	char *cmd_name;								//cmd命令名称
+	char **cmd_send_schema;						//发送的表头格式
+	char **cmd_recv_schema;						//接收到的表头格式
+}_Orvibo_Schema_Config_Map_T;
 
+/*
+//cmd名称---全局命令配置表所在节点的地址映射， 方便查找速度
+typedef struct __Orvibo_Cmd_Name_2_Addr_S{
+	char *cmd_name;								//cmd名称
+	unsigned int addr;							//全局配置列表中的地址
+}_Orvibo_Cmd_Name_2_Addr_T;
+*/
+
+typedef struct __Orvibo_Schema_S{
+	char *title;								//表头
+	unsigned len;								//长度
+}_Orvibo_Schema_T;
+
+
+//schema 列表，每条cmd的发送表头、接收表头均有一个schema列表分开记录
+typedef struct __Orvibo_Schema_List_S{			
+	_Orvibo_Schema_T *schema;					
+	struct __Orvibo_Schema_List_S *next;
+}_Orvibo_Schema_List_T;
+
+//每条cmd的结构信息
 typedef struct __Orvibo_Cmd_S{
-	_Orvibo_Head_Map_T **requset_head;
-	_Orvibo_Head_Map_T **response_head;
-	char *cmd_name;
-	void *cmd_info;
+	_Orvibo_Schema_List_T *requset_schema;
+	_Orvibo_Schema_List_T *response_schema;
 }_Orvibo_Cmd_T;
 
+//全局cmd 信息列表
 typedef struct __Orvibo_Cmd_List_S{
 	char *cmd_name;
+	int is_broadcast;							//是否是UDP广播方式
 	_Orvibo_Cmd_T cmd;
 	struct __Orvibo_Cmd_List *next;
 }_Orvibo_Cmd_List_T;
 
+
+//消息定义
 typedef struct __Orvibo_Cmd_Info_S{
 	char *cmd_name;
 	unsigned char *cmd_msg;
 	unsigned int cmd_len;
 }_Orvibo_Cmd_Info_T;
 
+//会话信息
 typedef struct __Orvibo_Msg_Info_S{
 	unsigned long req_id;
 	_Orvibo_Cmd_Info_T *requset;
