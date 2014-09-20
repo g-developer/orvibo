@@ -121,6 +121,17 @@ int send_cmd_2_orvibo_udp_server(_Orvibo_Udp_Server_Info_T *udp_info, const _Orv
 
 	int retry = ORVIBO_RETRY_TIME;
 	talk->ask = udp_info->local_addr;
+	talk->requset = (_Orvibo_Cmd_Info_T*)malloc(sizeof(_Orvibo_Cmd_Info_T));
+	memset(talk->requset, 0, sizeof(_Orvibo_Cmd_Info_T));
+	int cmd_name_len = strlen(cmd_info->cmd_name) + 1;
+	talk->requset->cmd_name = (char*)malloc(cmd_name_len);
+	snprintf(talk->requset->cmd_name, cmd_name_len, "%s", cmd_info->cmd_name);
+	talk->requset->cmd_msg = (char*)malloc(sizeof(char) * cmd_info->cmd_len);
+	int i = 0;
+	for(i=0; i<cmd_info->cmd_len; i++){
+		talk->requset->cmd_msg[i] = cmd_info->cmd_msg[i];
+	}
+	talk->requset->cmd_len = cmd_info->cmd_len;
 	talk->requset = cmd_info;
 	//while(retry--){
 	while(1){
@@ -141,10 +152,16 @@ int send_cmd_2_orvibo_udp_server(_Orvibo_Udp_Server_Info_T *udp_info, const _Orv
 			break;
 		}
 	}
-	talk->response->cmd_name = talk->requset->cmd_name;
+	talk->response = (_Orvibo_Cmd_Info_T*)malloc(sizeof(_Orvibo_Cmd_Info_T));
+	memset(talk->response, 0, sizeof(_Orvibo_Cmd_Info_T));
+	talk->response->cmd_name = (char*)malloc(sizeof(char) * cmd_name_len);
+	snprintf(talk->response->cmd_name, cmd_name_len, "%s", talk->requset->cmd_name);
+
 	talk->response->cmd_msg = (char*)malloc(sizeof(char) * recvByts);
 	snprintf(talk->response->cmd_msg, recvByts, "%x", recvBuf);
+
 	talk->response->cmd_len = recvByts;
+
 	return 0;
 }
 
