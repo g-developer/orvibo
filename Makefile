@@ -3,3 +3,6 @@ obj: orvibo_cmd.h orvibo_remote_control.h orvibo_socket.h
 clean:
 	rm -rf t
 	rm -rf core.*
+	rm -rf core
+	rm -rf or
+	rm -rf zyc

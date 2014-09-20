@@ -86,7 +86,7 @@ void display_msg(_Orvibo_Msg_Info_T* talk){
 		printf("request id[%ld]\n", talk->req_id);
 		int i = 0;
 		printf("%s:%d send		cmd[%s]:\n", inet_ntoa(talk->ask.sin_addr), talk->ask.sin_port, talk->requset->cmd_name);
-		char* tmp = talk->requset->cmd_msg;
+		unsigned char* tmp = talk->requset->cmd_msg;
 		for(i=0; i<talk->requset->cmd_len; i++){
 			printf("\t%x", tmp[i]);
 		}
