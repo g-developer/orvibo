@@ -19,20 +19,9 @@
 
 #include "orvibo_cmd.h"
 #include "orvibo_socket.h"
+#include "orvibo_util.h"
 
 /*
-_Orvibo_Schema_Map_T cmd[] = {
-	{	"qa", 
-		{"Head:2", "Len:2", "Cmd:2"}, 
-		{"Head:2", "Len:2", "Cmd:2", "Status:1", "Uid:12", "localPassword:12", "Model:6", "Time:4", "Status:1"},
-	},
-	{	"qb", 
-		{"Head:2", "Len:2", "Cmd:2"}, 
-		{"Head:2", "Len:2", "Cmd:2", "Status:1", "Uid:12", "localPassword:12", "Model:6", "Time:4", "Status:1"},
-	},
-};
-*/
-
 int getCmd(_Orvibo_Cmd_List_T *cmdList, char *cmdqa, _Orvibo_Cmd_Info_T *cmd_info){
 	unsigned char t[] = {0x68, 0x64, 0x00, 0x06, 0x71, 0x61};
 	char *cmd = "qa";
@@ -56,6 +45,7 @@ int getCmd(_Orvibo_Cmd_List_T *cmdList, char *cmdqa, _Orvibo_Cmd_Info_T *cmd_inf
 	printf("\n");
 	return 0;
 }
+*/
 
 void destroy_cmd_info(_Orvibo_Cmd_Info_T *cmd_info){
 	if(NULL != cmd_info){
@@ -101,6 +91,44 @@ void display_msg(_Orvibo_Msg_Info_T* talk){
 		printf("\n");
 	}
 }
+
+int read_orvibo_schema(_Orvibo_Schema_Config_Map_T schema_config[], _Orvibo_Cmd_Config_T *cmd_conf){
+	if(NULL == schema_config || NULL == cmd_conf){
+		return -1;
+	}
+	_Orvibo_Schema_Config_Map_T *tmp_schema;
+	char *tmp;
+	int i = 0;
+	int j = 0;
+	int k = 0;
+	int s = 0;
+	tmp_schema = schema_config;
+	unsigned char **sp_tmp1 = NULL;
+	unsigned char **sp_tmp2 = NULL;
+	while(NULL != tmp_schema->cmd_name){
+		tmp_schema = &(schema_config[i]);
+		printf("i---temp_schema[%d][cmd_name]		:	%s\n", i, tmp_schema->cmd_name);
+		printf("i---temp_schema[%d][cmd_send_schema]	:	%s\n", i, tmp_schema->cmd_send_schema);
+		printf("i---temp_schema[%d][cmd_recv_schema]	:	%s\n", i, tmp_schema->cmd_recv_schema);
+		printf("i---temp_schema[%d][is_broadcast]	:	%d\n", i, tmp_schema->is_broadcast);
+		sp_tmp1 = split_str_2_arr(tmp_schema->cmd_send_schema, ',');
+		
+		while(NULL != sp_tmp1 && NULL != sp_tmp1[j]){
+			sp_tmp2 = split_str_2_arr(sp_tmp1[j], ':');
+			// set config
+			free_str_2_arr(sp_tmp2);
+			j++;
+		}
+		//if(0 != s){
+			free_str_2_arr(sp_tmp1);
+		//}
+		s++;
+		i++;
+		break;
+	}
+	return 0;
+}
+
 
 /*
 int main(){

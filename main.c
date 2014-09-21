@@ -29,51 +29,42 @@
 
 #include "orvibo_cmd.h"
 #include "orvibo_socket.h"
-
+#include "orvibo_util.h"
 
 _Orvibo_Schema_Config_Map_T cmd[] = {
-	{   "qa", 
-		{"Head:2", "Len:2", "Cmd:2"}, 
-		{"Head:2", "Len:2", "Cmd:2", "Status:1", "Uid:12", "localPassword:12", "Model:6", "Time:4", "Status:1"},
+	{   "qa",						 
+		"Head:2,Len:2,Cmd:2", 
+		"Head:2,Len:2,Cmd:2,Status:1,Uid:12,localPassword:12,Model:6,Time:4,Status:1",
+		1,
 	},
 	{   "qg", 
-		{"Head:2", "Len:2", "Cmd:2", "Uid:12"}, 
-		{"Head:2", "Len:2", "Cmd:2", "Status:1", "Uid:12", "localPassword:12", "Model:6", "Time:4", "Status:1"},
+		"Head:2,Len:2,Cmd:2,Uid:12", 
+		"Head:2,Len:2,Cmd:2,Status:1,Uid:12,localPassword:12,Model:6,Time:4,Status:1",
+		1,
 	},
 	{   "qc", 
-		{"Head:2", "Len:2", "Cmd:2", "Uid:12"}, 
-		{"Head:2", "Len:2", "Cmd:2", "Status:1", "Uid:12", "localPassword:12"},
+		"Head:2,Len:2,Cmd:2,Uid:12", 
+		"Head:2,Len:2,Cmd:2,Status:1,Uid:12,localPassword:12",
+		0,
 	},
 	{   "qf", 
-		{"Head:2", "Len:2", "Cmd:2", "Uid:12"}, 
-		{"Head:2", "Len:2", "Cmd:2", "Status:1", "Uid:12", "localPassword:12", "Status:1"},
+		"Head:2,Len:2,Cmd:2,Uid:12", 
+		"Head:2,Len:2,Cmd:2,Status:1,Uid:12,localPassword:12,Status:1",
+		0,
 	},
 	{   "qf2", 
-		{"Head:2", "Len:2", "Cmd:2", "Uid:12"}, 
-		{"Head:2", "Len:2", "Cmd:2", "Status:1", "Uid:12", "localPassword:12", "Model:6", "Time:4"},
+		"Head:2,Len:2,Cmd:2,Uid:12", 
+		"Head:2,Len:2,Cmd:2,Status:1,Uid:12,localPassword:12,Model:6,Time:4",
+		0,
 	},
 };
 
 
-void read_Orvibo_Cmd_Schema(_Orvibo_Schema_Config_Map_T *schema_map[]){
-	_Orvibo_Schema_Config_Map_T *tmp = schema_map;
-	int i =0;
-	while(NULL != tmp){
-		tmp = schema_map[i];
-		printf("i------%d\n",i);
-		if(0 != tmp && 1 != tmp){
-			printf("i---char----%s\n",tmp);
-		}else{
-			printf("i---index---%d\n",tmp);
-		}
-		i++;
-	}
-}
-
-
 int main(){
+	
+	_Orvibo_Cmd_Config_T cmd_conf[32];
 
-	read_Orvibo_Cmd_Schema(cmd);
+	read_orvibo_schema(cmd, cmd_conf);
 
 	/*
 	_Orvibo_Cmd_Info_T *cmd_info = (_Orvibo_Cmd_Info_T *)malloc(sizeof(_Orvibo_Cmd_Info_T));

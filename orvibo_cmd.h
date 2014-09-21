@@ -31,8 +31,9 @@
 
 typedef struct __Orvibo_Schema_Config_Map_S{
 	char *cmd_name;								//cmd命令名称
-	char **cmd_send_schema;						//发送的表头格式
-	char **cmd_recv_schema;						//接收到的表头格式
+	char *cmd_send_schema;						//发送的表头格式
+	char *cmd_recv_schema;						//接收到的表头格式
+	int is_broadcast;							//是否是UDP广播方式
 }_Orvibo_Schema_Config_Map_T;
 
 /*
@@ -43,31 +44,34 @@ typedef struct __Orvibo_Cmd_Name_2_Addr_S{
 }_Orvibo_Cmd_Name_2_Addr_T;
 */
 
-typedef struct __Orvibo_Schema_S{
+typedef struct __Orvibo_Schema_Unit_S{
 	char *title;								//表头
 	unsigned len;								//长度
-}_Orvibo_Schema_T;
+	unsigned index;								//第几个
+}_Orvibo_Schema_Unit_T;
 
 
 //schema 列表，每条cmd的发送表头、接收表头均有一个schema列表分开记录
-typedef struct __Orvibo_Schema_List_S{			
-	_Orvibo_Schema_T *schema;					
-	struct __Orvibo_Schema_List_S *next;
-}_Orvibo_Schema_List_T;
+typedef struct __Orvibo_Schema_S{			
+	unsigned count;								//总个数
+	_Orvibo_Schema_Unit_T *schema;					
+	struct __Orvibo_Schema_S *next;
+}_Orvibo_Schema_T;
 
 //每条cmd的结构信息
 typedef struct __Orvibo_Cmd_S{
-	_Orvibo_Schema_List_T *requset_schema;
-	_Orvibo_Schema_List_T *response_schema;
+	_Orvibo_Schema_T *requset_schema;
+	_Orvibo_Schema_T *response_schema;
 }_Orvibo_Cmd_T;
 
-//全局cmd 信息列表
-typedef struct __Orvibo_Cmd_List_S{
+
+//全局cmd 信息单元
+typedef struct __Orvibo_Cmd_Config_S{
 	char *cmd_name;
 	int is_broadcast;							//是否是UDP广播方式
-	_Orvibo_Cmd_T cmd;
-	struct __Orvibo_Cmd_List *next;
-}_Orvibo_Cmd_List_T;
+	_Orvibo_Cmd_T *cmd;
+	struct __Orvibo_Cmd_Config_S *next;
+}_Orvibo_Cmd_Config_T;
 
 
 //消息定义
@@ -86,7 +90,9 @@ typedef struct __Orvibo_Msg_Info_S{
 	struct sockaddr_in answer;
 }_Orvibo_Msg_Info_T;
 
-int getCmd(_Orvibo_Cmd_List_T *cmdList, char *cmdqa, _Orvibo_Cmd_Info_T *cmd_info);
+int read_orvibo_schema(_Orvibo_Schema_Config_Map_T schema_config[], _Orvibo_Cmd_Config_T *cmd_conf);
+
+//int getCmd(_Orvibo_Cmd_List_T *cmdList, char *cmdqa, _Orvibo_Cmd_Info_T *cmd_info);
 
 //int complate_cmd_list();
 
