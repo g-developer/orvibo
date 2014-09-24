@@ -1,5 +1,5 @@
-obj: orvibo_cmd.h orvibo_remote_control.h orvibo_socket.h orvibo_util.h
-	gcc -g -Wall main.c orvibo_cmd.c  orvibo_cmd.h orvibo_socket.c orvibo_util.c -o zyc1
+obj: orvibo_cmd.h orvibo_remote_control.h orvibo_socket.h orvibo_util.h orvibo.h
+	gcc -g -Wall main.c orvibo_cmd.c  orvibo_cmd.h orvibo_socket.c orvibo_util.c orvibo_remote_control.c orvibo.c -o zyc1
 clean:
 	rm -rf t
 	rm -rf core.*

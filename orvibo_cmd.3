@@ -71,42 +71,6 @@ void destroy_msg_info(_Orvibo_Msg_Info_T *msg_info){
 	}
 }
 
-void destroy_cmd_config(_Orvibo_Cmd_Config_T *msg_conf, unsigned long bucket_num){
-	unsigned int index = 0;
-	_Orvibo_Schema_T *tmp = NULL;
-	_Orvibo_Schema_T *tmp2 = NULL;
-	printf("aaaa\n");
-	while(index < bucket_num){
-		if(NULL != msg_conf[index].cmd_name){
-			printf("index-----------%d\n", index);
-			free(msg_conf[index].cmd_name);
-			tmp = msg_conf[index].cmd->requset_schema;
-			while(NULL != tmp && NULL != tmp->schema){
-				tmp2 = tmp->next;
-				printf("aaaa---1--------%s\n", tmp->schema->title);
-				free(tmp->schema->title);
-				free(tmp->schema);
-				free(tmp);
-				tmp = tmp2;
-			}
-			//free((msg_conf[index].cmd)->requset_schema);
-
-			tmp = msg_conf[index].cmd->response_schema;
-			while(NULL != tmp && NULL != tmp->schema){
-				printf("bbbb----2--------%s\n", tmp->schema->title);
-				tmp2 = tmp->next;
-				free(tmp->schema->title);
-				free(tmp->schema);
-				free(tmp);
-				tmp = tmp2;
-			}
-			//free(msg_conf[index].cmd)->response_schema;
-			free(msg_conf[index].cmd);
-		}
-		index++;
-	}
-}
-
 void display_msg(_Orvibo_Msg_Info_T* talk){
 	if(NULL == talk){
 		printf("\n");
@@ -133,6 +97,7 @@ int read_orvibo_schema(_Orvibo_Schema_Config_Map_T schema_config[], _Orvibo_Cmd_
 		return -1;
 	}
 	_Orvibo_Schema_Config_Map_T *tmp_schema;
+	char *tmp;
 	int i = 0;
 	int j = 0;
 	int k = 0;
@@ -163,18 +128,21 @@ int read_orvibo_schema(_Orvibo_Schema_Config_Map_T schema_config[], _Orvibo_Cmd_
 		//为_Orvibo_Cmd_T cmd申请存储空间
 		cmd_conf[hash_index].cmd = (_Orvibo_Cmd_T *)malloc(sizeof(_Orvibo_Cmd_T));
 
-		//发送时的schema配置
+		//解析发送头格式，并且赋值到cmd_conf[hash_index]->cmd->requset_schema
+		//cmd_conf[hash_index]->cmd->requset_schema = (_Orvibo_Schema_T *)malloc(sizeof(_Orvibo_Schema_T) * 1);
+
 		_Orvibo_Schema_T *schema_tmp = NULL, *schema_tmp_1 = NULL, *schema_head = NULL;
 		sp_tmp1 = split_str_2_arr(tmp_schema->cmd_send_schema, ',');
+
 		(&cmd_conf[hash_index])->cmd->requset_schema = schema_head;
 		schema_tmp = schema_head;
+
 		_Orvibo_Schema_Unit_T *unit_tmp = NULL;
 		unit_start = unit_end = 0;
 		int s = 1;
 		while(NULL != sp_tmp1 && NULL != sp_tmp1[j]){
 
 			schema_tmp_1 = (_Orvibo_Schema_T *)malloc(sizeof(_Orvibo_Schema_T) * 1);
-			memset(schema_tmp_1, 0, sizeof(_Orvibo_Schema_T) * 1);
 			s++;
 			schema_tmp_1->count = s + 1;
 			schema_tmp_1->schema = NULL;
@@ -216,53 +184,6 @@ int read_orvibo_schema(_Orvibo_Schema_Config_Map_T schema_config[], _Orvibo_Cmd_
 			j++;
 		}
 		free_str_2_arr(sp_tmp1);
-
-		//接收时的recv的schema配置
-		schema_tmp = schema_tmp_1 = schema_head = NULL;
-		sp_tmp1 = split_str_2_arr(tmp_schema->cmd_recv_schema, ',');
-		(&cmd_conf[hash_index])->cmd->response_schema = schema_head;
-		schema_tmp = schema_head;
-		unit_tmp = NULL;
-		unit_start = unit_end = 0;
-		s = 1;
-		j = 0;
-		while(NULL != sp_tmp1 && NULL != sp_tmp1[j]){
-			schema_tmp_1 = (_Orvibo_Schema_T *)malloc(sizeof(_Orvibo_Schema_T) * 1);
-			s++;
-			schema_tmp_1->count = s + 1;
-			schema_tmp_1->schema = NULL;
-			schema_tmp_1->next = NULL;
-			sp_tmp2 = split_str_2_arr(sp_tmp1[j], ':');
-			k = 0; 
-			//为单元申请空间
-			unit_tmp = (_Orvibo_Schema_Unit_T *)malloc(sizeof(_Orvibo_Schema_Unit_T) * 1);
-			//为title赋值
-			unit_tmp->title = (unsigned char *)malloc(sizeof(unsigned char) * (strlen(sp_tmp2[0]) + 1));
-			snprintf(unit_tmp->title, strlen(sp_tmp2[0]) + 1, "%s", sp_tmp2[0]);
-			unit_tmp->len = strtol(sp_tmp2[1], NULL, 10);
-			unit_tmp->index = j;
-			if(0 == j){
-				unit_start = 0;
-			}else{
-				unit_start = unit_end + 1;
-			}
-			unit_tmp->start = unit_start;
-			unit_end = unit_tmp->len - 1 + unit_start;
-			unit_tmp->end = unit_end;
-
-			schema_tmp_1->schema = unit_tmp;
-			free_str_2_arr(sp_tmp2);
-			if(0 == j){
-				(&cmd_conf[hash_index])->cmd->response_schema = schema_tmp_1;
-				schema_tmp = schema_tmp_1;
-			}else{
-				schema_tmp->next = schema_tmp_1;
-				//printf("2---[%d]-------name[%s]\n", j, schema_tmp->schema->title);
-				schema_tmp = schema_tmp->next;
-			}
-			j++;
-		}
-		free_str_2_arr(sp_tmp1);
 		i++;
 	}
 	display_cmd_config(cmd_conf, bucket_num);
@@ -270,14 +191,15 @@ int read_orvibo_schema(_Orvibo_Schema_Config_Map_T schema_config[], _Orvibo_Cmd_
 }
 
 void display_cmd_config(_Orvibo_Cmd_Config_T *cmd_conf, unsigned long bucket_num){
-	unsigned int i = 0;
-	unsigned int k = 0;
+	_Orvibo_Cmd_Config_T *cmd_conf_tmp = NULL;
+	unsigned long i = 0;
+	unsigned long k = 0;
 	_Orvibo_Schema_T *tmp = NULL;
 	for(i=0; i<bucket_num; i++){
 		if(NULL == cmd_conf[i].cmd_name){
 			continue;
 		}
-		printf("The cmd_conf[%d] Info Below\n", i);
+		printf("The cmd_conf[%ld] Info Below\n", i);
 		printf("\tcmd_name				:	%s\n", cmd_conf[i].cmd_name);
 		printf("\tis_broadcast				:	%d\n", cmd_conf[i].is_broadcast);
 		printf("\trequest_schema count			:	%d\n", cmd_conf[i].cmd->requset_schema->count);
@@ -292,101 +214,32 @@ void display_cmd_config(_Orvibo_Cmd_Config_T *cmd_conf, unsigned long bucket_num
 			tmp = tmp->next;
 			k++;
 		}
-		printf("\tresponse_schema count			:	%d\n", cmd_conf[i].cmd->response_schema->count);
-		tmp = cmd_conf[i].cmd->response_schema;
-		k = 0;
-		while(NULL != tmp){
-			printf("\t\ti[%d]----k[%d]----Unit TiTile		:	%s\n", i, k, tmp->schema->title);
-			printf("\t\ti[%d]----k[%d]----Unit Len		:	%d\n", i, k, tmp->schema->len);
-			printf("\t\ti[%d]----k[%d]----Unit Index		:	%d\n", i, k, tmp->schema->index);
-			printf("\t\ti[%d]----k[%d]----Unit Start		:	%d\n", i, k, tmp->schema->start);
-			printf("\t\ti[%d]----k[%d]----Unit End		:	%d\n", i, k, tmp->schema->end);
-			tmp = tmp->next;
-			k++;
-		}
 		printf("\n");
 	}
 }
 
-_Orvibo_Cmd_Config_T *get_orvibo_cmd_conf(_Orvibo_Cmd_Config_T *cmd_conf, unsigned long bucket_num, const unsigned char *cmd_name){
-
-	unsigned long hash_index = 0;
-	if(NULL == cmd_conf || 0 == bucket_num || NULL == cmd_name){
-		return NULL;
-	}
-	hash_index = get_schema_hash_num(cmd_name, bucket_num);
-	if(NULL == &cmd_conf[hash_index]){
-		return NULL;
-	}else{
-		return &cmd_conf[hash_index];
-	}
-}
-
-
-_Orvibo_Schema_Unit_T *get_orvibo_schema_segment(_Orvibo_Schema_T *schema_conf, const char *key){
-	if(NULL == schema_conf || NULL == key){
-		return NULL;
-	}
-	_Orvibo_Schema_T *tmp = schema_conf;
-	while(NULL != tmp){
-		if(0 == strcmp(tmp->schema->title, key)){
-			break;
-		}
-		tmp = tmp->next;
-	}
-	return tmp->schema;
-}
-
-unsigned char *set_orvibo_cmd_segment(unsigned char *cmd_str, _Orvibo_Schema_Unit_T *schema_conf, const unsigned char *value){
-	if(NULL == cmd_str || NULL == schema_conf || NULL == value){
-		return NULL;
-	}
-	unsigned int index = 0;
 	/*
-	//if(strlen(value) != schema_conf->len){
-	if(sizeof(value) != schema_conf->len){
-		return NULL;
-	}
-	*/
-	for(index = 0; index < schema_conf->len; index++){
-		cmd_str[index + schema_conf->start] = value[index];
-	}
-	return cmd_str;
-}
+	   int main(){
+	   _Orvibo_Cmd_Info_T *cmd_info = (_Orvibo_Cmd_Info_T *)malloc(sizeof(_Orvibo_Cmd_Info_T));
+	   memset(cmd_info, 0, sizeof(_Orvibo_Cmd_Info_T));
+	   getCmd(cmd, "qa", cmd_info);
 
-//需要手工free
-unsigned char *get_orvibo_cmd_segment(unsigned char *cmd_str, _Orvibo_Schema_Unit_T *schema_conf){
-	if(NULL == cmd_str || NULL == schema_conf){
-		return NULL;
-	}
-	unsigned int index = 0;
-	unsigned char *seg = NULL;
-	seg = (unsigned char *)malloc(sizeof(unsigned char) * (schema_conf->len));
-	memset(seg, 0, schema_conf->len);
-	for(index = 0; index < schema_conf->len; index++){
-		seg[index] = cmd_str[index + schema_conf->start];
-	}
-	return seg;
-}
-
-int get_orvibo_cmd_len(_Orvibo_Cmd_Config_T *cmd_conf, const unsigned char *type){
-	if(NULL == cmd_conf || NULL == type){
-		return -1;
-	}
-	_Orvibo_Schema_T *schema = NULL;
-	int cmp = strcmp("request", type);
-	if(0 == cmp){
-		schema = cmd_conf->cmd->requset_schema;
-	}else{
-		schema = cmd_conf->cmd->response_schema;
-	}
-	int len = 0;
-	while(NULL != schema){
-		len += schema->schema->len;
-		schema = schema->next;
-	}
-	return len;
-}
+	   free(cmd_info);
+	   }
+	   */
 
 
-/* vim: set ts=4 sw=4 sts=4 tw=100 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/* vim: set ts=4 sw=4 sts=4 tw=100 */

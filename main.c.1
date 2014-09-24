@@ -1,0 +1,201 @@
+/***************************************************************************
+ * 
+ * Copyright (c) 2014 Baidu.com, Inc. All Rights Reserved
+ * $Id$ 
+ * 
+ **************************************************************************/
+
+
+
+/**
+ * @file main.c
+ * @author work(zhangyouchang@baidu.com)
+ * @date 2014/09/20 15:14:57
+ * @version $Revision$ 
+ * @brief 
+ *  
+ **/
+
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<errno.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
+#include<arpa/inet.h>
+#include<unistd.h>
+#include <stdarg.h>
+
+#include "orvibo_cmd.h"
+#include "orvibo_socket.h"
+#include "orvibo_util.h"
+#include "orvibo_remote_control.h"
+
+_Orvibo_Schema_Config_Map_T cmd[] = {
+	{   "qa",						 
+		"Head:2,Len:2,Cmd:2", 
+		"Head:2,Len:2,Cmd:2,Status:1,Uid:12,localPassword:12,Model:6,Time:4,Status:1",
+		1,
+	},
+	{   "qg", 
+		"Head:2,Len:2,Cmd:2,Uid:12", 
+		"Head:2,Len:2,Cmd:2,Status:1,Uid:12,localPassword:12,Model:6,Time:4,Status:1",
+		1,
+	},
+	{   "cl", 
+		"Head:2,Len:2,Cmd:2,Uid:12,LocalPassword:12", 
+		"Head:2,Len:2,Cmd:2,Uid:12,SessionId:4,ErrorCode:1,Status:1",
+		0,
+	},
+	{   "dc", 
+		"Head:2,Len:2,Cmd:2,Uid:12,SessionId:4,Order:1", 
+		"Head:2,Len:2,Cmd:2,Uid:12,SessionId:4,Status:1",
+		0,
+	},
+	{   "hb", 
+		"Head:2,Len:2,Cmd:2,Uid:12,SessionId:4", 
+		"Head:2,Len:2,Cmd:2,Uid:12,SessionId:4,Status:1",
+		0,
+	},
+};
+
+void test(int a, int change_count,...){
+	va_list arg_ptr;
+	va_start(arg_ptr, change_count);
+	int i = 0;
+	const char *tmp;
+	while(i < change_count){
+		//if (0 == i%2){
+			tmp = va_arg(arg_ptr, const char*);
+			printf("wca---%d------%s\n", i, tmp);
+		//}else{
+		//	tmp_1 = va_arg(arg_ptr, unsigned int);
+		//}
+		i++;
+	}	
+	va_end(arg_ptr);
+}
+
+int main(){
+	
+	_Orvibo_Cmd_Config_T cmd_conf[ORVIBO_CMD_HASH_BUCKET_NUM];
+	
+	memset(cmd_conf, 0, sizeof(_Orvibo_Cmd_Config_T) * ORVIBO_CMD_HASH_BUCKET_NUM);
+
+	read_orvibo_schema(cmd, cmd_conf, ORVIBO_CMD_HASH_BUCKET_NUM);
+	
+	const char *cmd_name = "qa";
+	
+	unsigned char qa_cmd[] = {0x68, 0x64, 0x00, 0x06, 0x71, 0x61};
+	_Orvibo_Cmd_Config_T *qa_cmd_conf = get_orvibo_cmd_conf(cmd_conf, ORVIBO_CMD_HASH_BUCKET_NUM, cmd_name);
+	_Orvibo_Schema_Unit_T *qa_head_unit = get_orvibo_schema_segment(qa_cmd_conf->cmd->requset_schema, "Cmd");
+	
+	int i = 0;
+	while(i < sizeof(qa_cmd)){
+		printf("1----qa_cmd[%d] = %x\n", i, qa_cmd[i]);
+		i++;
+	}
+		
+	i = 0;
+	unsigned char *qa_cmd_change = set_orvibo_cmd_segment(qa_cmd, qa_head_unit, "aa");
+	
+	if(NULL != qa_cmd_change){
+		while(i < sizeof(qa_cmd)){
+			printf("2----qa_cmd[%d] = %x\n", i, qa_cmd_change[i]);
+			i++;
+		}
+	}
+	
+	unsigned char *cmd_str = get_orvibo_cmd_segment(qa_cmd_change, qa_head_unit);
+	i = 0;
+	if(NULL != cmd_str){
+		while(i < strlen(cmd_str) - 1){
+			printf("2----qa_cmd[%d] = %x\n", i, cmd_str[i]);
+			i++;
+		}
+	}
+	free(cmd_str);
+	
+	test(1, 4, "aa", "2", "bb", "3");
+	int cl_cmd_len = 0;
+	unsigned char s_uid[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12};
+	unsigned char s_session[] = {0x12, 0x13, 0x71, 0x61};
+	unsigned char s_order[] = {0x61};
+	unsigned char *cl_cmd = gen_orvibo_cmd(cmd_conf, ORVIBO_CMD_HASH_BUCKET_NUM, "cl", &cl_cmd_len, 6, "Uid", s_uid, "SessionId", s_session, "Order",s_order);
+	//unsigned char *cl_cmd = gen_orvibo_cmd(cmd_conf, ORVIBO_CMD_HASH_BUCKET_NUM, "cl", &cl_cmd_len, 4, "Uid", s_uid, "SessionId", s_session);
+	i = 0;
+	printf("cl_cmd len : [%d]\n", cl_cmd_len);
+	for(i=0; i<cl_cmd_len; i++){
+		printf("haha--11--cl_cmd[%d] = %x\n", i, cl_cmd[i]);
+	}
+	
+	unsigned char *cmd_tpl[ORVIBO_CMD_HASH_BUCKET_NUM];
+	memset(cmd_tpl, 0, sizeof(unsigned char) * ORVIBO_CMD_HASH_BUCKET_NUM);
+	int hash_num = get_schema_hash_num("cl", ORVIBO_CMD_HASH_BUCKET_NUM); 
+	cmd_tpl[hash_num] = (unsigned const char *)malloc(sizeof(unsigned const char) * cl_cmd_len);
+	memset(cmd_tpl[hash_num], 0, sizeof(unsigned const char) * cl_cmd_len);
+	for(i=0; i<cl_cmd_len; i++){
+		printf("haha--11--cl_cmd[%d] = %x\n", i, cl_cmd[i]);
+		cmd_tpl[hash_num][i] = cl_cmd[i];
+	}
+	
+	s_session[0] = 0x12;
+	s_session[1] = 0x13;
+	s_session[2] = 0x71;
+	s_session[3] = 0x81;
+	s_order[0] = 0x71;
+	cl_cmd = modify_orvibo_cmd_segment(cmd_conf, ORVIBO_CMD_HASH_BUCKET_NUM, cmd_tpl, "cl", 4, "SessionId", s_session, "Order",s_order);
+
+	for(i=0; i<cl_cmd_len; i++){
+		printf("haha--22--cl_cmd[%d] = %x\n", i, cl_cmd[i]);
+	}
+
+	free(cl_cmd);
+
+	/*
+	_Orvibo_Cmd_Info_T *cmd_info = (_Orvibo_Cmd_Info_T *)malloc(sizeof(_Orvibo_Cmd_Info_T));
+	memset(cmd_info, 0, sizeof(_Orvibo_Cmd_Info_T));
+
+	_Orvibo_Udp_Server_Info_T *udp_info = (_Orvibo_Udp_Server_Info_T *)malloc(sizeof(_Orvibo_Udp_Server_Info_T));
+	memset(udp_info, 0, sizeof(_Orvibo_Udp_Server_Info_T));
+
+	_Orvibo_Msg_Info_T *msg_info = (_Orvibo_Msg_Info_T *)malloc(sizeof(_Orvibo_Msg_Info_T));
+	memset(msg_info, 0, sizeof(_Orvibo_Msg_Info_T));
+
+	
+	//get one cmd
+	
+
+	int setRet = set_socketfd_info(udp_info, "192.168.99.215", 10000, "255.255.255.255", 10000, 1);
+	printf("set socket fd Ret[%d]\n",setRet);	
+
+	send_cmd_2_orvibo_udp_server(udp_info, cmd_info, msg_info);
+	
+	
+
+	display_msg(msg_info);
+	destroy_cmd_info(cmd_info);
+	destroy_msg_info(msg_info);
+	close_orvibo_udp_socket(udp_info);
+	*/
+	
+	destroy_cmd_config(cmd_conf, ORVIBO_CMD_HASH_BUCKET_NUM);
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* vim: set ts=4 sw=4 sts=4 tw=100 */
