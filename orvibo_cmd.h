@@ -81,8 +81,8 @@ typedef struct __Orvibo_Cmd_Config_S{
 
 //消息定义
 typedef struct __Orvibo_Cmd_Info_S{
-	char *cmd_name;
-	unsigned char *cmd_msg;
+	unsigned char cmd_name[8];
+	unsigned char cmd_msg[64];
 	unsigned int cmd_len;
 }_Orvibo_Cmd_Info_T;
 
@@ -105,7 +105,9 @@ _Orvibo_Schema_Unit_T *get_orvibo_schema_segment(_Orvibo_Schema_T *schema_conf, 
 unsigned char *set_orvibo_cmd_segment(unsigned char *cmd_str, _Orvibo_Schema_Unit_T *schema_conf, const unsigned char *value);
 
 //需要手工free
-unsigned char *get_orvibo_cmd_segment(unsigned char *cmd_str, _Orvibo_Schema_Unit_T *schema_conf);
+//unsigned char *get_orvibo_cmd_segment(unsigned char *cmd_str, _Orvibo_Schema_Unit_T *schema_conf);
+
+unsigned char *get_orvibo_cmd_segment(_Orvibo_Cmd_Config_T *cmd_conf, unsigned const int bucket_num, const unsigned char *resp, unsigned const char* cmd_name, unsigned const char *type, unsigned const char *segment, unsigned int *len);
 
 int get_orvibo_cmd_len(_Orvibo_Cmd_Config_T *cmd_conf, const unsigned char *type);
 

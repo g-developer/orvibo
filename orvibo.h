@@ -27,7 +27,7 @@
 #include<errno.h>
 #include<sys/types.h>
 #include<unistd.h>
-#include <stdarg.h>
+#include<stdarg.h>
 
 #include "orvibo_cmd.h"
 #include "orvibo_socket.h"
@@ -37,9 +37,9 @@
 
 int orvibo_init(_Orvibo_Schema_Config_Map_T schema_config[], _Orvibo_Cmd_Config_T *cmd_conf, unsigned char **cmd_tpl, const unsigned int bucket_num);
 
+int assign_cmd_tpl(unsigned char **cmd_tpl, const unsigned int bucket_num, unsigned const char *cmd_name, unsigned const char *str_cmd, unsigned const cmd_len);
 
-
-
+int assign_cmd_info(_Orvibo_Cmd_Info_T *cmd_info, unsigned const char *cmd_name, unsigned int cmd_len, unsigned const char *cmd_str);
 
 
 

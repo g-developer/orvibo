@@ -21,31 +21,6 @@
 #include "orvibo_socket.h"
 #include "orvibo_util.h"
 
-/*
-   int getCmd(_Orvibo_Cmd_List_T *cmdList, char *cmdqa, _Orvibo_Cmd_Info_T *cmd_info){
-   unsigned char t[] = {0x68, 0x64, 0x00, 0x06, 0x71, 0x61};
-   char *cmd = "qa";
-   memset(cmd_info, 0, sizeof(_Orvibo_Cmd_Info_T));
-   int cmd_len = strlen(cmd) + 1;
-   cmd_info->cmd_name = (char*)malloc(sizeof(char) * cmd_len);
-   snprintf(cmd_info->cmd_name, cmd_len, "%s", cmd);
-   int cmd_msg_len = sizeof(t);
-   cmd_info->cmd_msg = (unsigned char*)malloc(sizeof(char) * cmd_msg_len);
-//snprintf(cmd_info->cmd_msg, cmd_msg_len, "%u", t);
-cmd_info->cmd_len = cmd_msg_len;
-int i = 0;
-for(i=0; i<sizeof(t); i++){
-printf("%d--1--%x\t", i, t[i]);
-cmd_info->cmd_msg[i] = t[i];
-}
-printf("\n-----sizeof(t)[%d]\n",cmd_msg_len);
-for(i=0; i<sizeof(t); i++){
-printf("%d--2--%x\t", i, cmd_info->cmd_msg[i]);
-}
-printf("\n");
-return 0;
-}
-*/
 
 void destroy_cmd_info(_Orvibo_Cmd_Info_T *cmd_info){
 	if(NULL != cmd_info){
@@ -354,6 +329,7 @@ unsigned char *set_orvibo_cmd_segment(unsigned char *cmd_str, _Orvibo_Schema_Uni
 	return cmd_str;
 }
 
+/*
 //需要手工free
 unsigned char *get_orvibo_cmd_segment(unsigned char *cmd_str, _Orvibo_Schema_Unit_T *schema_conf){
 	if(NULL == cmd_str || NULL == schema_conf){
@@ -366,6 +342,43 @@ unsigned char *get_orvibo_cmd_segment(unsigned char *cmd_str, _Orvibo_Schema_Uni
 	for(index = 0; index < schema_conf->len; index++){
 		seg[index] = cmd_str[index + schema_conf->start];
 	}
+	return seg;
+}
+*/
+
+//get_orvibo_cmd_segment(qa_msg_info->response->cmd_msg, schema_config, "qa", "Uid")
+unsigned char *get_orvibo_cmd_segment(_Orvibo_Cmd_Config_T *cmd_conf, unsigned const int bucket_num, const unsigned char *resp, unsigned const char* cmd_name, unsigned const char *type, unsigned const char *segment, unsigned int *len){
+	if(NULL == resp || NULL == cmd_conf || NULL == cmd_name || NULL == segment || 0 == bucket_num || NULL == type || NULL == len){
+		return NULL;
+	}
+	*len = 0;
+	int hash_index = get_schema_hash_num(cmd_name, bucket_num);
+	int cmp = strcmp("response", type);
+	_Orvibo_Schema_T *schema_tmp = NULL;
+	if(0 == cmp){
+		schema_tmp = cmd_conf[hash_index].cmd->response_schema;
+	}else{
+		schema_tmp = cmd_conf[hash_index].cmd->requset_schema;
+	}
+	while(NULL != schema_tmp){
+		if(0 == strcmp(segment, schema_tmp->schema->title)){
+			break;
+		}else{
+			schema_tmp = schema_tmp->next;
+		}
+	}
+	//没有找到: schema 里面没有找到 segment
+	if(NULL == schema_tmp){
+		return NULL;
+	}
+
+	unsigned char *seg = (unsigned char *)malloc(sizeof(unsigned char) * schema_tmp->schema->len);
+	memset(seg, 0, sizeof(unsigned char) * schema_tmp->schema->len);
+	int index = 0, i = 0;
+	for(i=0; i<schema_tmp->schema->len; i++){
+		seg[i] = resp[i + schema_tmp->schema->start]; 
+	}
+	*len = schema_tmp->schema->len;
 	return seg;
 }
 

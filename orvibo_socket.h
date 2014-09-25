@@ -28,24 +28,21 @@ typedef int socketfd;
 #define		ORVIBO_UDP_BROADCAST_PORT	10000
 #define		ORVIBO_UDP_MAX_RECV_BYTS	1024
 
+
 typedef struct __Orvibo_Udp_Server_Info_S{
-	char *server_udp_ip;
-	int	server_udp_port;
-	char *local_udp_ip;
-	int *local_udp_port;
-	socketfd local_send_fd;
-	socketfd local_recv_fd;
-	struct sockaddr_in remote_addr;
-	struct sockaddr_in local_addr;
+	unsigned char *ip;
+	unsigned int port;
+	socketfd fd;
+	struct sockaddr_in addr;
 }_Orvibo_Udp_Server_Info_T;
 
-int set_socketfd_info(_Orvibo_Udp_Server_Info_T *udp_info, const char *local_udp_ip, const int local_udp_port, const char *server_udp_ip, const int server_udp_port, const int mode);
+int gen_orvibo_udp_socket(_Orvibo_Udp_Server_Info_T *udp_info, const char *ip, const int port, const int mode);
 
-int send_cmd_2_orvibo_udp_server(_Orvibo_Udp_Server_Info_T *udp_info, const _Orvibo_Cmd_Info_T *cmd_info, _Orvibo_Msg_Info_T *talk);
+int send_cmd_2_orvibo_udp_server(_Orvibo_Udp_Server_Info_T *udp_send_info, _Orvibo_Udp_Server_Info_T *udp_recv_info, const _Orvibo_Cmd_Info_T *cmd_info, _Orvibo_Msg_Info_T *talk);
 
 void close_orvibo_udp_socket(_Orvibo_Udp_Server_Info_T *udp_info);
 
-
+unsigned const int get_local_ip(socketfd fd, unsigned char *ip);
 
 
 
